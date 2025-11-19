@@ -28,7 +28,7 @@ export default function SignupScreen() {
       setError('Passwords do not match');
       return;
     }
-    // We'll normalize username for uniqueness checking (lowercase)
+    // normalize username for uniqueness checking 
     const usernameVal = (username || '').trim();
     if (!username || username.trim().length < 3) {
       setError('Please choose a username (at least 3 characters)');
