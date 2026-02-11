@@ -1,15 +1,19 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
-import 'react-native-reanimated';
+import {
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
+} from "@react-navigation/native";
+import { Stack, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect } from "react";
+import "react-native-reanimated";
 
-import { auth } from '@/firebaseConfig';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from "@/firebaseConfig";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { onAuthStateChanged } from "firebase/auth";
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: "(tabs)",
 };
 
 export default function RootLayout() {
@@ -21,20 +25,28 @@ export default function RootLayout() {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
         // If authenticated, send to the main app
-        router.replace('/' as any);
+        router.replace("/" as any);
       } else {
         // If not authenticated, send to login
-        router.replace('/login' as any);
+        router.replace("/login" as any);
       }
     });
     return () => unsub();
   }, [router]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="movie/[id]"
+          options={{ headerShown: false, presentation: "card" }}
+        />
+        <Stack.Screen
+          name="modal"
+          options={{ presentation: "modal", title: "Modal" }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
