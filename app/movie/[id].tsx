@@ -1,6 +1,8 @@
 import { StarRating } from "@/components/star-rating";
+import { auth, db } from "@/firebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -45,6 +47,7 @@ export default function MovieDetailScreen() {
   const [userRating, setUserRating] = useState(0);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isfavourite, setIsfavourite] = useState(false);
+  const movieId = Array.isArray(id) ? id[0] : id;
 
   useEffect(() => {
     async function fetchMovieData() {
@@ -74,14 +77,122 @@ export default function MovieDetailScreen() {
     }
   }, [id]);
 
-  const toggleWatchlist = () => {
-    setIsInWatchlist(!isInWatchlist);
-    // TODO: need to save to Firebase
+  useEffect(() => {
+    async function fetchWatchlistStatus() {
+      const user = auth.currentUser;
+      if (!user || !movieId) {
+        setIsInWatchlist(false);
+        return;
+      }
+
+      try {
+        const watchlistRef = doc(
+          db,
+          "users",
+          user.uid,
+          "watchlist",
+          movieId.toString(),
+        );
+        const snapshot = await getDoc(watchlistRef);
+        setIsInWatchlist(snapshot.exists());
+      } catch {
+        setIsInWatchlist(false);
+      }
+    }
+
+    fetchWatchlistStatus();
+  }, [movieId]);
+
+  useEffect(() => {
+    async function fetchFavouriteStatus() {
+      const user = auth.currentUser;
+      if (!user || !movieId) {
+        setIsfavourite(false);
+        return;
+      }
+
+      try {
+        const favouriteRef = doc(
+          db,
+          "users",
+          user.uid,
+          "favourites",
+          movieId.toString(),
+        );
+        const snapshot = await getDoc(favouriteRef);
+        setIsfavourite(snapshot.exists());
+      } catch {
+        setIsfavourite(false);
+      }
+    }
+
+    fetchFavouriteStatus();
+  }, [movieId]);
+
+  const toggleWatchlist = async () => {
+    const user = auth.currentUser;
+    if (!user || !movie || !movieId) {
+      return;
+    }
+
+    const watchlistRef = doc(
+      db,
+      "users",
+      user.uid,
+      "watchlist",
+      movieId.toString(),
+    );
+
+    try {
+      if (isInWatchlist) {
+        await deleteDoc(watchlistRef);
+        setIsInWatchlist(false);
+      } else {
+        await setDoc(watchlistRef, {
+          movieId: movie.id,
+          title: movie.title,
+          poster_path: movie.poster_path ?? null,
+          backdrop_path: movie.backdrop_path ?? null,
+          addedAt: Date.now(),
+        });
+        setIsInWatchlist(true);
+      }
+    } catch {
+      // ignore
+    }
   };
 
-  const togglefavourite = () => {
-    setIsfavourite(!isfavourite);
-    // TODO: need to save to Firebase
+  const togglefavourite = async () => {
+    const user = auth.currentUser;
+    if (!user || !movie || !movieId) {
+      return;
+    }
+
+    const favouriteRef = doc(
+      db,
+      "users",
+      user.uid,
+      "favourites",
+      movieId.toString(),
+    );
+
+    try {
+      if (isfavourite) {
+        await deleteDoc(favouriteRef);
+        setIsfavourite(false);
+      } else {
+        await setDoc(favouriteRef, {
+          movieId: movie.id,
+          title: movie.title,
+          poster_path: movie.poster_path ?? null,
+          backdrop_path: movie.backdrop_path ?? null,
+          addedAt: Date.now(),
+        });
+        setIsfavourite(true);
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const handleRatingChange = (rating: number) => {
