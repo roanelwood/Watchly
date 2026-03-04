@@ -1,19 +1,29 @@
+import { auth, db } from "@/firebaseConfig";
 import { useRouter } from "expo-router";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const apiKey = "5b08fa299e458e98810648d4daac2ba5";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+
+interface WatchlistItem {
+  movieId: number;
+  title: string;
+  poster_path: string | null;
+}
 
 function MovieRow({
   title,
@@ -101,7 +111,86 @@ function MovieRow({
   );
 }
 
+function WatchlistRow({ items }: { items: WatchlistItem[] }) {
+  const router = useRouter();
+
+  if (items.length === 0) return null;
+
+  return (
+    <View style={styles.rowContainer}>
+      <Text style={styles.rowTitle}>Your Watchlist</Text>
+      <FlatList
+        data={items}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => String(item.movieId)}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.posterContainer}
+            activeOpacity={0.8}
+            onPress={() => router.push(`/movie/${item.movieId}` as any)}
+          >
+            <Image
+              source={{
+                uri: item.poster_path
+                  ? IMAGE_BASE + item.poster_path
+                  : undefined,
+              }}
+              style={styles.poster}
+              resizeMode="cover"
+            />
+            <Text style={styles.posterTitle} numberOfLines={1}>
+              {item.title}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+}
+
 export default function HomePage() {
+  const [user, setUser] = useState<any>(auth.currentUser);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setWatchlist([]);
+      setWatchlistLoading(false);
+      return;
+    }
+
+    const watchlistRef = collection(db, "users", user.uid, "watchlist");
+    const watchlistQuery = query(watchlistRef, orderBy("addedAt", "desc"));
+    const unsub = onSnapshot(
+      watchlistQuery,
+      (snapshot) => {
+        const items: WatchlistItem[] = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            movieId: data.movieId,
+            title: data.title,
+            poster_path: data.poster_path ?? null,
+          };
+        });
+        setWatchlist(items);
+        setWatchlistLoading(false);
+      },
+      () => {
+        setWatchlist([]);
+        setWatchlistLoading(false);
+      },
+    );
+
+    return () => unsub();
+  }, [user]);
+
   const rows = [
     { title: "Trending", genreInfo: { url: "trending/movie/week" } },
     { title: "Popular", genreInfo: { url: "movie/popular" } },
@@ -111,21 +200,25 @@ export default function HomePage() {
   ];
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingVertical: 12 }}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>🎬 Welcome to Watchly</Text>
-        <Text style={styles.subtitle}>
-          Track, rate, and discover films with AI-powered recommendations.
-        </Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {user?.displayName
+              ? `Welcome, ${user.displayName}!`
+              : "Welcome back"}
+          </Text>
+        </View>
 
-      {rows.map((r) => (
-        <MovieRow key={r.title} title={r.title} genreInfo={r.genreInfo} />
-      ))}
-    </ScrollView>
+        {!watchlistLoading && watchlist.length > 0 ? (
+          <WatchlistRow items={watchlist} />
+        ) : null}
+
+        {rows.map((r) => (
+          <MovieRow key={r.title} title={r.title} genreInfo={r.genreInfo} />
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -135,6 +228,7 @@ const posterHeight = Math.round(posterWidth * 1.5);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#090909" },
+  contentContainer: { paddingTop: 8, paddingBottom: 12 },
   header: { paddingHorizontal: 12, paddingVertical: 16 },
   title: { color: "#fff", fontSize: 24, fontWeight: "700" },
   subtitle: { color: "#aaa", marginTop: 6 },
