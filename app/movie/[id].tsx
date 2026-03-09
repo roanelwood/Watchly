@@ -18,6 +18,8 @@ import {
 const apiKey = "5b08fa299e458e98810648d4daac2ba5";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 const IMAGE_ORIGINAL = "https://image.tmdb.org/t/p/original";
+const IMAGE_LOGO = "https://image.tmdb.org/t/p/w92";
+const FALLBACK_REGION = "US";
 
 interface MovieDetails {
   id: number;
@@ -38,6 +40,22 @@ interface CastMember {
   profile_path: string | null;
 }
 
+interface WatchProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+}
+
+const getRegionFromLocale = () => {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    const region = locale.split(/[-_]/)[1];
+    return region ? region.toUpperCase() : FALLBACK_REGION;
+  } catch {
+    return FALLBACK_REGION;
+  }
+};
+
 export default function MovieDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -47,6 +65,8 @@ export default function MovieDetailScreen() {
   const [userRating, setUserRating] = useState(0);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isfavourite, setIsfavourite] = useState(false);
+  const [watchProviders, setWatchProviders] = useState<WatchProvider[]>([]);
+  const [watchRegion, setWatchRegion] = useState(FALLBACK_REGION);
   const movieId = Array.isArray(id) ? id[0] : id;
 
   useEffect(() => {
@@ -65,6 +85,21 @@ export default function MovieDetailScreen() {
         );
         const creditsData = await creditsResponse.json();
         setCast(creditsData.cast?.slice(0, 10) || []);
+
+        // Get movie providers
+        const providersResponse = await fetch(
+          `https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${apiKey}`,
+        );
+        const providersData = await providersResponse.json();
+        const region = getRegionFromLocale();
+        const regionData =
+          providersData.results?.[region] ||
+          providersData.results?.[FALLBACK_REGION] ||
+          null;
+        const providers =
+          regionData?.flatrate || regionData?.rent || regionData?.buy || [];
+        setWatchProviders(providers.slice(0, 3));
+        setWatchRegion(regionData ? region : FALLBACK_REGION);
       } catch (error) {
         console.error("Error fetching movie data:", error);
       } finally {
@@ -341,6 +376,32 @@ export default function MovieDetailScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Where to Watch functionality*/}
+        {watchProviders.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Where to watch</Text>
+            <View style={styles.watchRow}>
+              <Text style={styles.watchLabel}>Watch on:</Text>
+              <View style={styles.watchProviders}>
+                {watchProviders.map((provider) => (
+                  <View key={provider.provider_id} style={styles.providerChip}>
+                    {provider.logo_path && (
+                      <Image
+                        source={{ uri: IMAGE_LOGO + provider.logo_path }}
+                        style={styles.providerLogo}
+                      />
+                    )}
+                    <Text style={styles.providerText} numberOfLines={1}>
+                      {provider.provider_name}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.watchRegion}>Region: {watchRegion}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Rating Section */}
         <View style={styles.ratingSection}>
           <Text style={styles.sectionTitle}>Your Rating</Text>
@@ -421,8 +482,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
-    height: "70%",
     backgroundColor: "rgba(9, 9, 9, 0.85)",
   },
   backButton: {
@@ -558,6 +619,47 @@ const styles = StyleSheet.create({
     color: "#aaa",
     fontSize: 14,
     marginTop: 8,
+  },
+  watchRow: {
+    gap: 12,
+  },
+  watchLabel: {
+    color: "#bbb",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  watchProviders: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  providerChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+    maxWidth: 180,
+  },
+  providerLogo: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    backgroundColor: "#222",
+  },
+  providerText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    flexShrink: 1,
+  },
+  watchRegion: {
+    color: "#777",
+    fontSize: 12,
   },
   overview: {
     color: "#ccc",
