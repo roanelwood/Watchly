@@ -43,6 +43,7 @@ function MovieRow({
       setLoading(true);
       setError(null);
       try {
+        // Fetch a TMDB row by genre
         let url = "";
         if (genreInfo.id) {
           url = `https://api.themoviedb.org/3/${genreInfo.url}?api_key=${apiKey}&with_genres=${genreInfo.id}&sort_by=popularity.desc&page=1`;
@@ -110,10 +111,11 @@ function MovieRow({
     </View>
   );
 }
-
+// display users watchlist on as first row on home page
 function WatchlistRow({ items }: { items: WatchlistItem[] }) {
   const router = useRouter();
 
+  // Skip rendering if the watchlist is empty
   if (items.length === 0) return null;
 
   return (
@@ -155,6 +157,7 @@ export default function HomePage() {
   const [watchlistLoading, setWatchlistLoading] = useState(true);
 
   useEffect(() => {
+    // Keep the local user state in sync with Firebase
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsub();
   }, []);
@@ -166,6 +169,7 @@ export default function HomePage() {
       return;
     }
 
+    // Live watchlist listener to stay updated
     const watchlistRef = collection(db, "users", user.uid, "watchlist");
     const watchlistQuery = query(watchlistRef, orderBy("addedAt", "desc"));
     const unsub = onSnapshot(
