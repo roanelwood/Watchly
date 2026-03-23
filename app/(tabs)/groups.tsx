@@ -317,16 +317,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#121212",
     paddingHorizontal: 20,
-    paddingTop: 32,
   },
   header: {
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 16,
   },
   title: {
     color: "#fff",
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   subtitle: {
     color: "#aaa",

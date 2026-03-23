@@ -1,5 +1,5 @@
 import { auth, db } from "@/firebaseConfig";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   addDoc,
   collection,
@@ -9,11 +9,13 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -34,6 +36,7 @@ type GroupMessage = {
   id: string;
   text: string;
   senderId: string;
+  senderName?: string;
   createdAt?: any;
 };
 
@@ -73,6 +76,7 @@ export default function GroupDetailPage() {
   const [searchResults, setSearchResults] = useState<MovieResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<MovieResult | null>(null);
+  const chatListRef = useRef<FlatList<GroupMessage>>(null);
 
   const groupRef = useMemo(() => {
     if (!groupId) return null;
@@ -115,6 +119,7 @@ export default function GroupDetailPage() {
           id: docSnap.id,
           text: data.text ?? "",
           senderId: data.senderId ?? "",
+          senderName: data.senderName ?? "",
           createdAt: data.createdAt,
         };
       });
@@ -123,6 +128,12 @@ export default function GroupDetailPage() {
 
     return () => unsub();
   }, [groupId]);
+
+  // adjust focus to bottom when sending new message to see updated chat
+  useEffect(() => {
+    if (activeTab !== "chat") return;
+    chatListRef.current?.scrollToEnd({ animated: true });
+  }, [messages.length, activeTab]);
 
   useEffect(() => {
     if (!groupId) return;
@@ -162,6 +173,7 @@ export default function GroupDetailPage() {
       await addDoc(messagesRef, {
         text: trimmed,
         senderId: user.uid,
+        senderName: user.displayName ?? "",
         createdAt: serverTimestamp(),
       });
       setMessageText("");
@@ -252,10 +264,13 @@ export default function GroupDetailPage() {
 
   return (
     <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerBackTitle: "Groups",
+          headerTitle: group?.name ?? "Group",
+        }}
+      />
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
         <Text style={styles.title}>{group.name ?? "Group"}</Text>
         {group.joinCode && (
           <Text style={styles.metaText}>Join code: {group.joinCode}</Text>
@@ -278,13 +293,23 @@ export default function GroupDetailPage() {
       </View>
 
       {activeTab === "chat" ? (
-        <View style={styles.content}>
+        // move msg input field up to see text while typing
+        <KeyboardAvoidingView
+          style={styles.content}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        >
           <FlatList
+            ref={chatListRef}
             data={messages}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => {
               const isMine = item.senderId === user?.uid;
+              const senderLabel =
+                item.senderName ||
+                (isMine ? user?.displayName || "Unknown" : "Unknown");
               return (
                 <View
                   style={[
@@ -292,6 +317,15 @@ export default function GroupDetailPage() {
                     isMine ? styles.messageMine : styles.messageOther,
                   ]}
                 >
+                  {/* show sender username above message text */}
+                  <Text
+                    style={[
+                      styles.messageSender,
+                      isMine && styles.messageSenderMine,
+                    ]}
+                  >
+                    {senderLabel}
+                  </Text>
                   <Text style={styles.messageText}>{item.text}</Text>
                 </View>
               );
@@ -313,7 +347,7 @@ export default function GroupDetailPage() {
               <Text style={styles.sendText}>Send</Text>
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       ) : (
         <View style={styles.content}>
           <View style={styles.panel}>
@@ -443,10 +477,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 12,
   },
-  backText: {
-    color: "#8bbdff",
-    marginBottom: 8,
-  },
   title: {
     color: "#fff",
     fontSize: 24,
@@ -499,6 +529,14 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: "#fff",
+  },
+  messageSender: {
+    color: "#fff",
+    fontSize: 10,
+    marginBottom: 4,
+  },
+  messageSenderMine: {
+    textAlign: "right",
   },
   inputRow: {
     flexDirection: "row",
