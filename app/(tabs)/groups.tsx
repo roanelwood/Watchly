@@ -1,4 +1,5 @@
 import { auth, db } from "@/firebaseConfig";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRouter } from "expo-router";
 import {
   collection,
@@ -33,6 +34,20 @@ type UserGroup = {
 export default function Page() {
   const router = useRouter();
   const user = auth.currentUser;
+  // Use the active light or dark mode
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = {
+    background: isDark ? "#121212" : "#fff",
+    text: isDark ? "#fff" : "#111",
+    subtext: isDark ? "#aaa" : "#555",
+    muted: isDark ? "#777" : "#666",
+    card: isDark ? "#1a1a1a" : "#f2f2f2",
+    cardAlt: isDark ? "#222" : "#eaeaea",
+    border: isDark ? "#2a2a2a" : "#ddd",
+    input: isDark ? "#111" : "#fff",
+    placeholder: isDark ? "#666" : "#999",
+  };
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"create" | "join" | null>(null);
@@ -206,38 +221,64 @@ export default function Page() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Groups</Text>
-        <Text style={styles.subtitle}>Create a group or join with a code.</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Groups</Text>
+        <Text style={[styles.subtitle, { color: colors.subtext }]}>
+          Create a group or join with a code.
+        </Text>
       </View>
 
       <View style={styles.actions}>
         <Pressable
           style={[
             styles.actionButton,
+            { backgroundColor: colors.cardAlt },
             mode === "create" && styles.actionActive,
+            mode === "create" && {
+              backgroundColor: isDark ? "#2a2a2a" : "#dcdcdc",
+            },
           ]}
           onPress={() => setMode(mode === "create" ? null : "create")}
         >
-          <Text style={styles.actionText}>Create group</Text>
+          <Text style={[styles.actionText, { color: colors.text }]}>
+            Create group
+          </Text>
         </Pressable>
         <Pressable
-          style={[styles.actionButton, mode === "join" && styles.actionActive]}
+          style={[
+            styles.actionButton,
+            { backgroundColor: colors.cardAlt },
+            mode === "join" && styles.actionActive,
+            mode === "join" && {
+              backgroundColor: isDark ? "#2a2a2a" : "#dcdcdc",
+            },
+          ]}
           onPress={() => setMode(mode === "join" ? null : "join")}
         >
-          <Text style={styles.actionText}>Join with code</Text>
+          <Text style={[styles.actionText, { color: colors.text }]}>
+            Join with code
+          </Text>
         </Pressable>
       </View>
 
       {/* Toggle between create/join panels based on active mode. */}
       {mode === "create" && (
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>New group</Text>
+        <View style={[styles.panel, { backgroundColor: colors.card }]}>
+          <Text style={[styles.panelTitle, { color: colors.text }]}>
+            New group
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.input,
+                borderColor: colors.border,
+                color: colors.text,
+              },
+            ]}
             placeholder="Group name"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.placeholder}
             value={groupName}
             onChangeText={setGroupName}
             autoCapitalize="words"
@@ -248,7 +289,7 @@ export default function Page() {
             disabled={actionLoading}
           >
             {actionLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.text} />
             ) : (
               <Text style={styles.primaryText}>Create</Text>
             )}
@@ -257,12 +298,21 @@ export default function Page() {
       )}
 
       {mode === "join" && (
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>Join a group</Text>
+        <View style={[styles.panel, { backgroundColor: colors.card }]}>
+          <Text style={[styles.panelTitle, { color: colors.text }]}>
+            Join a group
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.input,
+                borderColor: colors.border,
+                color: colors.text,
+              },
+            ]}
             placeholder="Join code"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.placeholder}
             value={joinCode}
             onChangeText={setJoinCode}
             autoCapitalize="characters"
@@ -273,7 +323,7 @@ export default function Page() {
             disabled={actionLoading}
           >
             {actionLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.text} />
             ) : (
               <Text style={styles.primaryText}>Join</Text>
             )}
@@ -281,17 +331,27 @@ export default function Page() {
         </View>
       )}
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && (
+        <Text
+          style={[styles.errorText, { color: isDark ? "#ff6b6b" : "#c0392b" }]}
+        >
+          {error}
+        </Text>
+      )}
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Your groups</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Your groups
+        </Text>
       </View>
 
       {/* Loading or empty or content states for the user's groups list */}
       {loading ? (
-        <ActivityIndicator color="#fff" style={{ marginTop: 20 }} />
+        <ActivityIndicator color={colors.text} style={{ marginTop: 20 }} />
       ) : groups.length === 0 ? (
-        <Text style={styles.emptyText}>No groups yet.</Text>
+        <Text style={[styles.emptyText, { color: colors.muted }]}>
+          No groups yet.
+        </Text>
       ) : (
         <FlatList
           data={groups}
@@ -299,11 +359,15 @@ export default function Page() {
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <Pressable
-              style={styles.groupCard}
+              style={[styles.groupCard, { backgroundColor: colors.card }]}
               onPress={() => router.push(`/group/${item.id}` as any)}
             >
-              <Text style={styles.groupName}>{item.name}</Text>
-              <Text style={styles.groupMeta}>{item.role}</Text>
+              <Text style={[styles.groupName, { color: colors.text }]}>
+                {item.name}
+              </Text>
+              <Text style={[styles.groupMeta, { color: colors.subtext }]}>
+                {item.role}
+              </Text>
             </Pressable>
           )}
         />

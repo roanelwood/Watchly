@@ -8,6 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
 
+import { ThemePreferenceProvider } from "@/context/theme-preference";
 import { auth } from "@/firebaseConfig";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { onAuthStateChanged } from "firebase/auth";
@@ -16,23 +17,9 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-export default function RootLayout() {
+function RootLayoutContent() {
+  // Provide navigation theming based on the active light or dark mode.
   const colorScheme = useColorScheme();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Listen for auth state changes and redirect to login when unauthenticated.
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // If authenticated, send to the main app
-        router.replace("/" as any);
-      } else {
-        // If not authenticated, send to login
-        router.replace("/login" as any);
-      }
-    });
-    return () => unsub();
-  }, [router]);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -58,5 +45,29 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Listen for auth state changes and redirect to login when unauthenticated.
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // If authenticated, send to the main app
+        router.replace("/" as any);
+      } else {
+        // If not authenticated, send to login
+        router.replace("/login" as any);
+      }
+    });
+    return () => unsub();
+  }, [router]);
+
+  return (
+    <ThemePreferenceProvider>
+      <RootLayoutContent />
+    </ThemePreferenceProvider>
   );
 }

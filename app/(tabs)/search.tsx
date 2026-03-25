@@ -1,3 +1,4 @@
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -33,6 +34,19 @@ export default function SearchPage() {
   const [hasSearched, setHasSearched] = useState(false);
 
   const searchMovies = async (query: string) => {
+    // Use the active light/dark mode
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === "dark";
+    const colors = {
+      background: isDark ? "#090909" : "#fff",
+      text: isDark ? "#fff" : "#111",
+      subtext: isDark ? "#aaa" : "#555",
+      muted: isDark ? "#888" : "#666",
+      surface: isDark ? "#1a1a1a" : "#f2f2f2",
+      border: isDark ? "#2a2a2a" : "#ddd",
+      input: isDark ? "#fff" : "#111",
+      placeholder: isDark ? "#666" : "#999",
+    };
     if (!query.trim()) {
       setMovies([]);
       setHasSearched(false);
@@ -94,11 +108,18 @@ export default function SearchPage() {
           }}
           style={[
             styles.moviePoster,
-            { width: posterWidth, height: posterHeight },
+            {
+              width: posterWidth,
+              height: posterHeight,
+              backgroundColor: isDark ? "#222" : "#eaeaea",
+            },
           ]}
           resizeMode="cover"
         />
-        <Text style={styles.movieTitle} numberOfLines={2}>
+        <Text
+          style={[styles.movieTitle, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {item.title}
         </Text>
         {item.release_date && (

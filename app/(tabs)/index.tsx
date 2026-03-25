@@ -1,4 +1,5 @@
 import { auth, db } from "@/firebaseConfig";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
@@ -25,12 +26,20 @@ interface WatchlistItem {
   poster_path: string | null;
 }
 
+type RowColors = {
+  text: string;
+  subtext: string;
+  poster: string;
+};
+
 function MovieRow({
   title,
   genreInfo,
+  colors,
 }: {
   title: string;
   genreInfo: { id?: number; url: string };
+  colors: RowColors;
 }) {
   const router = useRouter();
   const [movies, setMovies] = useState<any[]>([]);
@@ -69,7 +78,7 @@ function MovieRow({
   if (loading) {
     return (
       <View style={styles.rowContainer}>
-        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={[styles.rowTitle, { color: colors.text }]}>{title}</Text>
         <ActivityIndicator style={{ marginVertical: 12 }} />
       </View>
     );
@@ -77,7 +86,7 @@ function MovieRow({
 
   return (
     <View style={styles.rowContainer}>
-      <Text style={styles.rowTitle}>{title}</Text>
+      <Text style={[styles.rowTitle, { color: colors.text }]}>{title}</Text>
       {error ? (
         <Text style={{ color: "red" }}>{error}</Text>
       ) : (
@@ -98,10 +107,13 @@ function MovieRow({
                     ? IMAGE_BASE + item.poster_path
                     : undefined,
                 }}
-                style={styles.poster}
+                style={[styles.poster, { backgroundColor: colors.poster }]}
                 resizeMode="cover"
               />
-              <Text style={styles.posterTitle} numberOfLines={1}>
+              <Text
+                style={[styles.posterTitle, { color: colors.text }]}
+                numberOfLines={1}
+              >
                 {item.title || item.name}
               </Text>
             </TouchableOpacity>
@@ -112,7 +124,13 @@ function MovieRow({
   );
 }
 // display users watchlist on as first row on home page
-function WatchlistRow({ items }: { items: WatchlistItem[] }) {
+function WatchlistRow({
+  items,
+  colors,
+}: {
+  items: WatchlistItem[];
+  colors: RowColors;
+}) {
   const router = useRouter();
 
   // Skip rendering if the watchlist is empty
@@ -120,7 +138,9 @@ function WatchlistRow({ items }: { items: WatchlistItem[] }) {
 
   return (
     <View style={styles.rowContainer}>
-      <Text style={styles.rowTitle}>Your Watchlist</Text>
+      <Text style={[styles.rowTitle, { color: colors.text }]}>
+        Your Watchlist
+      </Text>
       <FlatList
         data={items}
         horizontal
@@ -138,10 +158,13 @@ function WatchlistRow({ items }: { items: WatchlistItem[] }) {
                   ? IMAGE_BASE + item.poster_path
                   : undefined,
               }}
-              style={styles.poster}
+              style={[styles.poster, { backgroundColor: colors.poster }]}
               resizeMode="cover"
             />
-            <Text style={styles.posterTitle} numberOfLines={1}>
+            <Text
+              style={[styles.posterTitle, { color: colors.text }]}
+              numberOfLines={1}
+            >
               {item.title}
             </Text>
           </TouchableOpacity>
@@ -155,6 +178,16 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(auth.currentUser);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
+  // Light or dark mode
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = {
+    background: isDark ? "#090909" : "#fff",
+    text: isDark ? "#fff" : "#111",
+    subtext: isDark ? "#aaa" : "#555",
+    muted: isDark ? "#777" : "#666",
+    poster: isDark ? "#222" : "#eaeaea",
+  };
 
   useEffect(() => {
     // Keep the local user state in sync with Firebase
@@ -204,10 +237,12 @@ export default function HomePage() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <View style={styles.header}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: colors.text }]}>
             {user?.displayName
               ? `Welcome, ${user.displayName}!`
               : "Welcome back"}
@@ -215,11 +250,16 @@ export default function HomePage() {
         </View>
 
         {!watchlistLoading && watchlist.length > 0 ? (
-          <WatchlistRow items={watchlist} />
+          <WatchlistRow items={watchlist} colors={colors} />
         ) : null}
 
         {rows.map((r) => (
-          <MovieRow key={r.title} title={r.title} genreInfo={r.genreInfo} />
+          <MovieRow
+            key={r.title}
+            title={r.title}
+            genreInfo={r.genreInfo}
+            colors={colors}
+          />
         ))}
       </ScrollView>
     </SafeAreaView>
