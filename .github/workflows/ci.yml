@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Check Expo config
-        run: npx expo doctor
+        run: npx expo-doctor
 
       - name: Run linter
         run: npm run lint
