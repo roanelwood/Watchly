@@ -26,6 +26,12 @@ interface WatchlistItem {
   poster_path: string | null;
 }
 
+interface FavouriteItem {
+  movieId: number;
+  title: string;
+  poster_path: string | null;
+}
+
 type RowColors = {
   text: string;
   subtext: string;
@@ -36,11 +42,11 @@ function MovieRow({
   title,
   genreInfo,
   colors,
-}: {
+}: Readonly<{
   title: string;
   genreInfo: { id?: number; url: string };
   colors: RowColors;
-}) {
+}>) {
   const router = useRouter();
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,10 +133,10 @@ function MovieRow({
 function WatchlistRow({
   items,
   colors,
-}: {
+}: Readonly<{
   items: WatchlistItem[];
   colors: RowColors;
-}) {
+}>) {
   const router = useRouter();
 
   // Skip rendering if the watchlist is empty
@@ -174,10 +180,62 @@ function WatchlistRow({
   );
 }
 
+function FavouritesRow({
+  items,
+  colors,
+}: Readonly<{
+  items: FavouriteItem[];
+  colors: RowColors;
+}>) {
+  const router = useRouter();
+
+  // Skip rendering if the favourites list is empty
+  if (items.length === 0) return null;
+
+  return (
+    <View style={styles.rowContainer}>
+      <Text style={[styles.rowTitle, { color: colors.text }]}>
+        Your Favourites
+      </Text>
+      <FlatList
+        data={items}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => String(item.movieId)}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.posterContainer}
+            activeOpacity={0.8}
+            onPress={() => router.push(`/movie/${item.movieId}` as any)}
+          >
+            <Image
+              source={{
+                uri: item.poster_path
+                  ? IMAGE_BASE + item.poster_path
+                  : undefined,
+              }}
+              style={[styles.poster, { backgroundColor: colors.poster }]}
+              resizeMode="cover"
+            />
+            <Text
+              style={[styles.posterTitle, { color: colors.text }]}
+              numberOfLines={1}
+            >
+              {item.title}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+}
+
 export default function HomePage() {
   const [user, setUser] = useState<any>(auth.currentUser);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
+  const [favourites, setFavourites] = useState<FavouriteItem[]>([]);
+  const [favouritesLoading, setFavouritesLoading] = useState(true);
   // Light or dark mode
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -228,6 +286,39 @@ export default function HomePage() {
     return () => unsub();
   }, [user]);
 
+  useEffect(() => {
+    if (!user) {
+      setFavourites([]);
+      setFavouritesLoading(false);
+      return;
+    }
+
+    // Live favourites listener to stay updated
+    const favouritesRef = collection(db, "users", user.uid, "favourites");
+    const favouritesQuery = query(favouritesRef, orderBy("addedAt", "desc"));
+    const unsub = onSnapshot(
+      favouritesQuery,
+      (snapshot) => {
+        const items: FavouriteItem[] = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            movieId: data.movieId,
+            title: data.title,
+            poster_path: data.poster_path ?? null,
+          };
+        });
+        setFavourites(items);
+        setFavouritesLoading(false);
+      },
+      () => {
+        setFavourites([]);
+        setFavouritesLoading(false);
+      },
+    );
+
+    return () => unsub();
+  }, [user]);
+
   const rows = [
     { title: "Trending", genreInfo: { url: "trending/movie/week" } },
     { title: "Popular", genreInfo: { url: "movie/popular" } },
@@ -238,9 +329,13 @@ export default function HomePage() {
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+      >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
             {user?.displayName
@@ -261,6 +356,10 @@ export default function HomePage() {
             colors={colors}
           />
         ))}
+
+        {!favouritesLoading && favourites.length > 0 ? (
+          <FavouritesRow items={favourites} colors={colors} />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -272,6 +371,7 @@ const posterHeight = Math.round(posterWidth * 1.5);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#090909" },
+  scrollView: { flex: 1 },
   contentContainer: { paddingTop: 8, paddingBottom: 12 },
   header: { paddingHorizontal: 12, paddingVertical: 16 },
   title: { color: "#fff", fontSize: 24, fontWeight: "700" },
