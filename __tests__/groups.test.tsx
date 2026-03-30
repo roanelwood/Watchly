@@ -8,6 +8,10 @@ jest.mock("expo-router", () => ({
   }),
 }));
 
+jest.mock("@/hooks/use-color-scheme", () => ({
+  useColorScheme: () => "dark",
+}));
+
 jest.mock("@/firebaseConfig", () => ({
   auth: { currentUser: null },
   db: {},

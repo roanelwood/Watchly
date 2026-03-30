@@ -432,6 +432,7 @@ export default function SearchPage() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
+              testID="search-clear-button"
               onPress={() => {
                 setSearchQuery("");
                 setMovies([]);
