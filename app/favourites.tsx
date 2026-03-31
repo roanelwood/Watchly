@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
@@ -66,7 +67,7 @@ export default function FavouritesScreen() {
   }, [user]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -112,7 +113,7 @@ export default function FavouritesScreen() {
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -120,12 +121,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    paddingTop: 16,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
+    paddingTop: 8,
     marginBottom: 12,
   },
   backButton: {

@@ -2,27 +2,29 @@ import { auth, db } from "@/firebaseConfig";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRouter } from "expo-router";
 import {
-  collection,
-  doc,
-  getDocs,
-  increment,
-  onSnapshot,
-  orderBy,
-  query,
-  runTransaction,
-  serverTimestamp,
-  where,
+    collection,
+    doc,
+    getDocs,
+    increment,
+    onSnapshot,
+    orderBy,
+    query,
+    runTransaction,
+    serverTimestamp,
+    where,
 } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
+
+const LIME = "#B7FF3C";
 
 type UserGroup = {
   id: string;
@@ -439,13 +441,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   primaryButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: LIME,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
   },
   primaryText: {
-    color: "#fff",
+    color: "#111",
     fontWeight: "600",
   },
   errorText: {

@@ -32,7 +32,7 @@ describe("SearchPage", () => {
   it("renders search header and default empty state", () => {
     const { getByText, getByPlaceholderText } = render(<SearchPage />);
 
-    expect(getByText("🔎 Search Movies")).toBeTruthy();
+    expect(getByText("Search Movies")).toBeTruthy();
     expect(getByText("Search for movies")).toBeTruthy();
     expect(getByPlaceholderText("Search for movies...")).toBeTruthy();
   });

@@ -17,6 +17,7 @@ import {
 const TMDB_API_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY;
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+const LIME = "#B7FF3C";
 
 interface Movie {
   id: number;
@@ -300,7 +301,7 @@ export default function SearchPage() {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6366f1" />
+          <ActivityIndicator size="large" color={LIME} />
           <Text style={[styles.loadingText, { color: colors.muted }]}>
             Searching...
           </Text>
@@ -354,7 +355,7 @@ export default function SearchPage() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>
-          🔎 Search Movies
+          Search Movies
         </Text>
         <Text style={[styles.subtitle, { color: colors.subtext }]}>
           Discover any film.
@@ -379,7 +380,7 @@ export default function SearchPage() {
             <Text
               style={[
                 styles.modeButtonText,
-                { color: searchMode === "tmdb" ? "#fff" : colors.subtext },
+                { color: searchMode === "tmdb" ? "#111" : colors.subtext },
               ]}
             >
               Standard
@@ -395,7 +396,7 @@ export default function SearchPage() {
             <Text
               style={[
                 styles.modeButtonText,
-                { color: searchMode === "ai" ? "#fff" : colors.subtext },
+                { color: searchMode === "ai" ? "#111" : colors.subtext },
               ]}
             >
               AI Search
@@ -500,7 +501,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   modeButtonActive: {
-    backgroundColor: "#6366f1",
+    backgroundColor: LIME,
   },
   modeButtonText: {
     fontSize: 13,

@@ -1,18 +1,17 @@
-import { StarRating } from "@/components/star-rating";
 import { auth, db } from "@/firebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const apiKey = "5b08fa299e458e98810648d4daac2ba5";
@@ -20,6 +19,7 @@ const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 const IMAGE_ORIGINAL = "https://image.tmdb.org/t/p/original";
 const IMAGE_LOGO = "https://image.tmdb.org/t/p/w92";
 const FALLBACK_REGION = "US";
+const LIME = "#B7FF3C";
 
 interface MovieDetails {
   id: number;
@@ -62,7 +62,6 @@ export default function MovieDetailScreen() {
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [cast, setCast] = useState<CastMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRating, setUserRating] = useState(0);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isfavourite, setIsfavourite] = useState(false);
   const [watchProviders, setWatchProviders] = useState<WatchProvider[]>([]);
@@ -230,11 +229,6 @@ export default function MovieDetailScreen() {
     }
   };
 
-  const handleRatingChange = (rating: number) => {
-    setUserRating(rating);
-    // TODO: need to save to Firebase
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -340,7 +334,7 @@ export default function MovieDetailScreen() {
             <Ionicons
               name={isInWatchlist ? "bookmark" : "bookmark-outline"}
               size={24}
-              color={isInWatchlist ? "#6366f1" : "#fff"}
+              color={isInWatchlist ? LIME : "#fff"}
             />
             <Text
               style={[
@@ -363,7 +357,7 @@ export default function MovieDetailScreen() {
             <Ionicons
               name={isfavourite ? "heart" : "heart-outline"}
               size={24}
-              color={isfavourite ? "#ef4444" : "#fff"}
+              color={isfavourite ? LIME : "#fff"}
             />
             <Text
               style={[
@@ -401,19 +395,6 @@ export default function MovieDetailScreen() {
             </View>
           </View>
         )}
-
-        {/* Rating Section */}
-        <View style={styles.ratingSection}>
-          <Text style={styles.sectionTitle}>Your Rating</Text>
-          <StarRating
-            rating={userRating}
-            onRatingChange={handleRatingChange}
-            size={40}
-          />
-          {userRating > 0 && (
-            <Text style={styles.ratingLabel}>{userRating} out of 5 stars</Text>
-          )}
-        </View>
 
         {/* Overview */}
         <View style={styles.section}>
@@ -591,8 +572,8 @@ const styles = StyleSheet.create({
     borderColor: "#2a2a2a",
   },
   actionButtonActive: {
-    backgroundColor: "rgba(99, 102, 241, 0.15)",
-    borderColor: "rgba(99, 102, 241, 0.3)",
+    backgroundColor: "rgba(183, 255, 60, 0.18)",
+    borderColor: "rgba(183, 255, 60, 0.45)",
   },
   actionButtonText: {
     color: "#fff",
@@ -600,7 +581,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   actionButtonTextActive: {
-    color: "#a5b4fc",
+    color: LIME,
   },
   section: {
     marginBottom: 32,
@@ -610,15 +591,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     marginBottom: 16,
-  },
-  ratingSection: {
-    marginBottom: 32,
-    alignItems: "flex-start",
-  },
-  ratingLabel: {
-    color: "#aaa",
-    fontSize: 14,
-    marginTop: 8,
   },
   watchRow: {
     gap: 12,

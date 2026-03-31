@@ -5,6 +5,10 @@ import ProfilePage from "../app/(tabs)/profile";
 const mockPush = jest.fn();
 const mockSetPreference = jest.fn();
 const mockSignOut = jest.fn().mockResolvedValue(undefined);
+const mockCollection = jest.fn();
+const mockQuery = jest.fn();
+const mockOrderBy = jest.fn();
+const mockOnSnapshot = jest.fn();
 let mockAuthStateUser: any = null;
 
 jest.mock("expo-router", () => ({
@@ -16,13 +20,21 @@ jest.mock("expo-router", () => ({
 jest.mock("@/context/theme-preference", () => ({
   useThemePreference: () => ({
     colorScheme: "dark",
-    preference: "system",
+    preference: "dark",
     setPreference: mockSetPreference,
   }),
 }));
 
 jest.mock("@/firebaseConfig", () => ({
   auth: {},
+  db: {},
+}));
+
+jest.mock("firebase/firestore", () => ({
+  collection: (...args: any[]) => mockCollection(...args),
+  query: (...args: any[]) => mockQuery(...args),
+  orderBy: (...args: any[]) => mockOrderBy(...args),
+  onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
 }));
 
 jest.mock("firebase/auth", () => ({
@@ -37,41 +49,66 @@ describe("ProfilePage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAuthStateUser = {
+      uid: "user-1",
       email: "test@watchly.app",
       displayName: "Tester",
     };
+
+    mockCollection.mockImplementation((_db: any, ...segments: string[]) => ({
+      path: segments.join("/"),
+    }));
+    mockQuery.mockImplementation((ref: any) => ref);
+    mockOrderBy.mockImplementation(() => ({}));
+    mockOnSnapshot.mockImplementation((target: any, onNext: any) => {
+      const isWatchlist = target?.path?.includes("/watchlist");
+      onNext({
+        docs: [
+          {
+            id: isWatchlist ? "w1" : "f1",
+            data: () => ({
+              movieId: isWatchlist ? 1997 : 550,
+              title: isWatchlist ? "Titanic" : "Fight Club",
+              poster_path: null,
+            }),
+          },
+        ],
+      });
+      return jest.fn();
+    });
   });
 
-  it("renders profile heading, user details and action buttons", async () => {
+  it("renders user heading, list previews and action buttons", async () => {
     const { getByText } = render(<ProfilePage />);
 
     await waitFor(() => {
-      expect(getByText("👤 Profile")).toBeTruthy();
       expect(getByText("Tester")).toBeTruthy();
       expect(getByText("test@watchly.app")).toBeTruthy();
-      expect(getByText("View Watchlist")).toBeTruthy();
-      expect(getByText("View Favourites")).toBeTruthy();
-      expect(getByText("Sign Out")).toBeTruthy();
+      expect(getByText("Watchlist")).toBeTruthy();
+      expect(getByText("Favourites")).toBeTruthy();
+      expect(getByText("Titanic")).toBeTruthy();
+      expect(getByText("Fight Club")).toBeTruthy();
+      expect(getByText("Sign out")).toBeTruthy();
     });
   });
 
   it("navigates to watchlist and favourites", async () => {
-    const { getByText } = render(<ProfilePage />);
+    const { getAllByText } = render(<ProfilePage />);
 
-    fireEvent.press(getByText("View Watchlist"));
-    fireEvent.press(getByText("View Favourites"));
+    const viewAllButtons = getAllByText("View full");
+    fireEvent.press(viewAllButtons[0]);
+    fireEvent.press(viewAllButtons[1]);
 
     expect(mockPush).toHaveBeenCalledWith("/watchlist");
     expect(mockPush).toHaveBeenCalledWith("/favourites");
   });
 
-  it("allows selecting system preference and signing out", async () => {
+  it("allows toggling dark mode and signing out", async () => {
     const { getByText } = render(<ProfilePage />);
 
-    fireEvent.press(getByText("Use system setting (active)"));
-    fireEvent.press(getByText("Sign Out"));
+    fireEvent.press(getByText("Dark mode: On"));
+    fireEvent.press(getByText("Sign out"));
 
-    expect(mockSetPreference).toHaveBeenCalledWith("system");
+    expect(mockSetPreference).toHaveBeenCalledWith("light");
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalled();
     });

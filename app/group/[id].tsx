@@ -1,30 +1,32 @@
 import { auth, db } from "@/firebaseConfig";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
-  addDoc,
-  collection,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
+    addDoc,
+    collection,
+    doc,
+    onSnapshot,
+    orderBy,
+    query,
+    serverTimestamp,
 } from "firebase/firestore";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 const apiKey = "5b08fa299e458e98810648d4daac2ba5";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+const LIME = "#B7FF3C";
 
 type GroupData = {
   name?: string;
@@ -48,6 +50,7 @@ type GroupPost = {
   year?: number | null;
   note?: string;
   authorId: string;
+  authorName?: string;
   createdAt?: any;
 };
 
@@ -152,6 +155,7 @@ export default function GroupDetailPage() {
           year: data.year ?? null,
           note: data.note ?? "",
           authorId: data.authorId ?? "",
+          authorName: data.authorName ?? "",
           createdAt: data.createdAt,
         };
       });
@@ -232,6 +236,7 @@ export default function GroupDetailPage() {
         year: releaseYear,
         note: postNote.trim(),
         authorId: user.uid,
+        authorName: user.displayName ?? "",
         createdAt: serverTimestamp(),
       });
       setSelectedMovie(null);
@@ -349,119 +354,137 @@ export default function GroupDetailPage() {
           </View>
         </KeyboardAvoidingView>
       ) : (
-        <View style={styles.content}>
-          <View style={styles.panel}>
-            <Text style={styles.panelTitle}>Share a movie</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Search for a movie"
-              placeholderTextColor="#666"
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-            />
-            {searchLoading ? (
-              <ActivityIndicator color="#fff" style={{ marginBottom: 8 }} />
-            ) : null}
-            {selectedMovie ? (
-              <View style={styles.selectedMovie}>
-                <Image
-                  source={{
-                    uri: selectedMovie.poster_path
-                      ? IMAGE_BASE + selectedMovie.poster_path
-                      : "https://via.placeholder.com/120x180/222/666?text=No+Poster",
-                  }}
-                  style={styles.selectedPoster}
-                />
-                <View style={styles.selectedInfo}>
-                  <Text style={styles.selectedTitle}>
-                    {selectedMovie.title}
-                  </Text>
-                  {selectedMovie.release_date ? (
-                    <Text style={styles.selectedMeta}>
-                      {new Date(selectedMovie.release_date).getFullYear()}
-                    </Text>
-                  ) : null}
-                  <Pressable
-                    style={styles.clearSelection}
-                    onPress={() => setSelectedMovie(null)}
-                  >
-                    <Text style={styles.clearSelectionText}>Change</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <FlatList
-                data={searchResults}
-                keyExtractor={(item) => String(item.id)}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.searchList}
-                renderItem={({ item }) => (
-                  <Pressable
-                    style={styles.searchCard}
-                    onPress={() => setSelectedMovie(item)}
-                  >
-                    <Image
-                      source={{
-                        uri: item.poster_path
-                          ? IMAGE_BASE + item.poster_path
-                          : "https://via.placeholder.com/120x180/222/666?text=No+Poster",
-                      }}
-                      style={styles.searchPoster}
-                    />
-                    <Text style={styles.searchTitle} numberOfLines={2}>
-                      {item.title}
-                    </Text>
-                  </Pressable>
-                )}
+        <KeyboardAvoidingView
+          style={styles.content}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.panel}>
+              <Text style={styles.panelTitle}>Share a movie</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Search for a movie"
+                placeholderTextColor="#666"
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+                returnKeyType="search"
+                onSubmitEditing={() => searchMovies(searchQuery)}
               />
-            )}
-            <TextInput
-              style={[styles.input, styles.inputMultiline]}
-              placeholder="Add a note (optional)"
-              placeholderTextColor="#666"
-              value={postNote}
-              onChangeText={setPostNote}
-              multiline
-            />
-            <Pressable
-              style={styles.primaryButton}
-              onPress={sharePost}
-              disabled={actionLoading || !selectedMovie}
-            >
-              <Text style={styles.primaryText}>Share</Text>
-            </Pressable>
-          </View>
-          <FlatList
-            data={posts}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
-            renderItem={({ item }) => (
-              <View style={styles.postCard}>
-                <View style={styles.postHeader}>
+              {searchLoading ? (
+                <ActivityIndicator color="#fff" style={{ marginBottom: 8 }} />
+              ) : null}
+              {selectedMovie ? (
+                <View style={styles.selectedMovie}>
                   <Image
                     source={{
-                      uri: item.posterPath
-                        ? IMAGE_BASE + item.posterPath
-                        : "https://via.placeholder.com/80x120/222/666?text=No+Poster",
+                      uri: selectedMovie.poster_path
+                        ? IMAGE_BASE + selectedMovie.poster_path
+                        : "https://via.placeholder.com/120x180/222/666?text=No+Poster",
                     }}
-                    style={styles.postPoster}
+                    style={styles.selectedPoster}
                   />
-                  <View style={styles.postInfo}>
-                    <Text style={styles.postTitle}>{item.title}</Text>
-                    {item.year ? (
-                      <Text style={styles.postMeta}>{item.year}</Text>
+                  <View style={styles.selectedInfo}>
+                    <Text style={styles.selectedTitle}>
+                      {selectedMovie.title}
+                    </Text>
+                    {selectedMovie.release_date ? (
+                      <Text style={styles.selectedMeta}>
+                        {new Date(selectedMovie.release_date).getFullYear()}
+                      </Text>
                     ) : null}
+                    <Pressable
+                      style={styles.clearSelection}
+                      onPress={() => setSelectedMovie(null)}
+                    >
+                      <Text style={styles.clearSelectionText}>Change</Text>
+                    </Pressable>
                   </View>
                 </View>
-                {item.note ? (
-                  <Text style={styles.postNote}>{item.note}</Text>
-                ) : null}
-                <Text style={styles.postMeta}>{item.authorId}</Text>
-              </View>
-            )}
-          />
-        </View>
+              ) : (
+                <FlatList
+                  data={searchResults}
+                  keyExtractor={(item) => String(item.id)}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.searchList}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      style={styles.searchCard}
+                      onPress={() => setSelectedMovie(item)}
+                    >
+                      <Image
+                        source={{
+                          uri: item.poster_path
+                            ? IMAGE_BASE + item.poster_path
+                            : "https://via.placeholder.com/120x180/222/666?text=No+Poster",
+                        }}
+                        style={styles.searchPoster}
+                      />
+                      <Text style={styles.searchTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+              )}
+              <TextInput
+                style={[styles.input, styles.inputMultiline]}
+                placeholder="Add a note (optional)"
+                placeholderTextColor="#666"
+                value={postNote}
+                onChangeText={setPostNote}
+                multiline
+                returnKeyType="done"
+                onSubmitEditing={() => sharePost()}
+              />
+              <Pressable
+                style={styles.primaryButton}
+                onPress={sharePost}
+                disabled={actionLoading || !selectedMovie}
+              >
+                <Text style={styles.primaryText}>Share</Text>
+              </Pressable>
+            </View>
+            <FlatList
+              data={posts}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.list}
+              scrollEnabled={false}
+              renderItem={({ item }) => (
+                <View style={styles.postCard}>
+                  <View style={styles.postHeader}>
+                    <Image
+                      source={{
+                        uri: item.posterPath
+                          ? IMAGE_BASE + item.posterPath
+                          : "https://via.placeholder.com/80x120/222/666?text=No+Poster",
+                      }}
+                      style={styles.postPoster}
+                    />
+                    <View style={styles.postInfo}>
+                      <Text style={styles.postTitle}>{item.title}</Text>
+                      {item.year ? (
+                        <Text style={styles.postMeta}>{item.year}</Text>
+                      ) : null}
+                    </View>
+                  </View>
+                  <View style={styles.postFooter}>
+                    {!!item.note && (
+                      <Text style={styles.postNote}>
+                        {item.authorName || "Unknown"}: {item.note}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              )}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
       )}
     </View>
   );
@@ -560,13 +583,13 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   sendButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: LIME,
     borderRadius: 10,
     paddingHorizontal: 14,
     justifyContent: "center",
   },
   sendText: {
-    color: "#fff",
+    color: "#111",
     fontWeight: "600",
   },
   panel: {
@@ -634,14 +657,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   primaryButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: LIME,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
     marginTop: 6,
   },
   primaryText: {
-    color: "#fff",
+    color: "#111",
     fontWeight: "600",
   },
   postCard: {
@@ -670,6 +693,9 @@ const styles = StyleSheet.create({
   },
   postNote: {
     color: "#bbb",
+    marginTop: 6,
+  },
+  postFooter: {
     marginTop: 6,
   },
   postMeta: {

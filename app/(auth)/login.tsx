@@ -12,6 +12,8 @@ import {
   View,
 } from "react-native";
 
+const LIME = "#B7FF3C";
+
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -148,14 +150,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   button: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: LIME,
     padding: 14,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: "#fff",
+    color: "#111",
     fontWeight: "600",
   },
   row: {
@@ -164,6 +166,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   note: { color: "#aaa" },
-  link: { color: "#1E90FF", fontWeight: "600" },
+  link: { color: LIME, fontWeight: "600" },
   error: { color: "#ff6b6b", marginTop: 8, textAlign: "center" },
 });
