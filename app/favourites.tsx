@@ -1,4 +1,5 @@
 import { auth, db } from "@/firebaseConfig";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
@@ -25,6 +26,16 @@ interface FavouriteItem {
 
 export default function FavouritesScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = {
+    background: isDark ? "#121212" : "#fff",
+    text: isDark ? "#fff" : "#111",
+    subtext: isDark ? "#eee" : "#111",
+    muted: isDark ? "#888" : "#666",
+    surface: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)",
+    poster: isDark ? "#222" : "#e6e6e6",
+  };
   const [user, setUser] = useState<any>(auth.currentUser);
   const [favourites, setFavourites] = useState<FavouriteItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,21 +78,25 @@ export default function FavouritesScreen() {
   }, [user]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="close" size={24} color="#fff" />
+          <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Your Favourites</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Your Favourites
+        </Text>
         <View style={styles.headerSpacer} />
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#fff" />
+          <ActivityIndicator size="large" color={colors.text} />
         </View>
       ) : (
         <FlatList
@@ -91,7 +106,9 @@ export default function FavouritesScreen() {
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.gridContent}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No movies added yet.</Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>
+              No movies added yet.
+            </Text>
           }
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -104,9 +121,12 @@ export default function FavouritesScreen() {
                     ? IMAGE_BASE + item.poster_path
                     : undefined,
                 }}
-                style={styles.poster}
+                style={[styles.poster, { backgroundColor: colors.poster }]}
               />
-              <Text style={styles.cardTitle} numberOfLines={2}>
+              <Text
+                style={[styles.cardTitle, { color: colors.subtext }]}
+                numberOfLines={2}
+              >
                 {item.title}
               </Text>
             </TouchableOpacity>

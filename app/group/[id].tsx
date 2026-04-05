@@ -1,4 +1,5 @@
 import { auth, db } from "@/firebaseConfig";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
     addDoc,
@@ -66,6 +67,26 @@ export default function GroupDetailPage() {
   const { id } = useLocalSearchParams();
   const user = auth.currentUser;
   const groupId = Array.isArray(id) ? id[0] : id;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = {
+    background: isDark ? "#121212" : "#fff",
+    text: isDark ? "#fff" : "#111",
+    subtext: isDark ? "#777" : "#555",
+    muted: isDark ? "#888" : "#666",
+    surface: isDark ? "#1a1a1a" : "#f2f2f2",
+    surfaceAlt: isDark ? "#1c1c1c" : "#eaeaea",
+    border: isDark ? "#1f1f1f" : "#ddd",
+    inputBg: isDark ? "#111" : "#fff",
+    inputBorder: isDark ? "#2a2a2a" : "#ddd",
+    inputText: isDark ? "#fff" : "#111",
+    placeholder: isDark ? "#666" : "#999",
+    tabActive: isDark ? "#2b2b2b" : "#e0e0e0",
+    messageMineBg: "#1E90FF",
+    messageMineText: "#fff",
+    messageOtherBg: isDark ? "#1f1f1f" : "#f1f1f1",
+    messageOtherText: isDark ? "#fff" : "#111",
+  };
 
   const [group, setGroup] = useState<GroupData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -250,16 +271,18 @@ export default function GroupDetailPage() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator color="#fff" />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.text} />
       </View>
     );
   }
 
   if (!group) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Group not found.</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Group not found.
+        </Text>
         <Pressable style={styles.primaryButton} onPress={() => router.back()}>
           <Text style={styles.primaryText}>Go back</Text>
         </Pressable>
@@ -268,7 +291,7 @@ export default function GroupDetailPage() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
           headerBackTitle: "Groups",
@@ -276,24 +299,42 @@ export default function GroupDetailPage() {
         }}
       />
       <View style={styles.header}>
-        <Text style={styles.title}>{group.name ?? "Group"}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {group.name ?? "Group"}
+        </Text>
         {group.joinCode && (
-          <Text style={styles.metaText}>Join code: {group.joinCode}</Text>
+          <Text style={[styles.metaText, { color: colors.subtext }]}>
+            Join code: {group.joinCode}
+          </Text>
         )}
       </View>
 
       <View style={styles.tabs}>
         <Pressable
-          style={[styles.tabButton, activeTab === "chat" && styles.tabActive]}
+          style={[
+            styles.tabButton,
+            { backgroundColor: colors.surfaceAlt },
+            activeTab === "chat" && [
+              styles.tabActive,
+              { backgroundColor: colors.tabActive },
+            ],
+          ]}
           onPress={() => setActiveTab("chat")}
         >
-          <Text style={styles.tabText}>Chat</Text>
+          <Text style={[styles.tabText, { color: colors.text }]}>Chat</Text>
         </Pressable>
         <Pressable
-          style={[styles.tabButton, activeTab === "feed" && styles.tabActive]}
+          style={[
+            styles.tabButton,
+            { backgroundColor: colors.surfaceAlt },
+            activeTab === "feed" && [
+              styles.tabActive,
+              { backgroundColor: colors.tabActive },
+            ],
+          ]}
           onPress={() => setActiveTab("feed")}
         >
-          <Text style={styles.tabText}>Feed</Text>
+          <Text style={[styles.tabText, { color: colors.text }]}>Feed</Text>
         </Pressable>
       </View>
 
@@ -319,28 +360,59 @@ export default function GroupDetailPage() {
                 <View
                   style={[
                     styles.messageBubble,
-                    isMine ? styles.messageMine : styles.messageOther,
+                    isMine
+                      ? [
+                          styles.messageMine,
+                          { backgroundColor: colors.messageMineBg },
+                        ]
+                      : [
+                          styles.messageOther,
+                          { backgroundColor: colors.messageOtherBg },
+                        ],
                   ]}
                 >
                   {/* show sender username above message text */}
                   <Text
                     style={[
                       styles.messageSender,
+                      {
+                        color: isMine
+                          ? colors.messageMineText
+                          : colors.messageOtherText,
+                      },
                       isMine && styles.messageSenderMine,
                     ]}
                   >
                     {senderLabel}
                   </Text>
-                  <Text style={styles.messageText}>{item.text}</Text>
+                  <Text
+                    style={[
+                      styles.messageText,
+                      {
+                        color: isMine
+                          ? colors.messageMineText
+                          : colors.messageOtherText,
+                      },
+                    ]}
+                  >
+                    {item.text}
+                  </Text>
                 </View>
               );
             }}
           />
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, { borderTopColor: colors.border }]}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.inputBg,
+                  borderColor: colors.inputBorder,
+                  color: colors.inputText,
+                },
+              ]}
               placeholder="Write a message"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.placeholder}
               value={messageText}
               onChangeText={setMessageText}
             />
@@ -364,19 +436,31 @@ export default function GroupDetailPage() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.panel}>
-              <Text style={styles.panelTitle}>Share a movie</Text>
+            <View style={[styles.panel, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.panelTitle, { color: colors.text }]}>
+                Share a movie
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.inputText,
+                  },
+                ]}
                 placeholder="Search for a movie"
-                placeholderTextColor="#666"
+                placeholderTextColor={colors.placeholder}
                 value={searchQuery}
                 onChangeText={handleSearchChange}
                 returnKeyType="search"
                 onSubmitEditing={() => searchMovies(searchQuery)}
               />
               {searchLoading ? (
-                <ActivityIndicator color="#fff" style={{ marginBottom: 8 }} />
+                <ActivityIndicator
+                  color={colors.text}
+                  style={{ marginBottom: 8 }}
+                />
               ) : null}
               {selectedMovie ? (
                 <View style={styles.selectedMovie}>
@@ -389,19 +473,33 @@ export default function GroupDetailPage() {
                     style={styles.selectedPoster}
                   />
                   <View style={styles.selectedInfo}>
-                    <Text style={styles.selectedTitle}>
+                    <Text
+                      style={[styles.selectedTitle, { color: colors.text }]}
+                    >
                       {selectedMovie.title}
                     </Text>
                     {selectedMovie.release_date ? (
-                      <Text style={styles.selectedMeta}>
+                      <Text
+                        style={[styles.selectedMeta, { color: colors.muted }]}
+                      >
                         {new Date(selectedMovie.release_date).getFullYear()}
                       </Text>
                     ) : null}
                     <Pressable
-                      style={styles.clearSelection}
+                      style={[
+                        styles.clearSelection,
+                        { backgroundColor: colors.surfaceAlt },
+                      ]}
                       onPress={() => setSelectedMovie(null)}
                     >
-                      <Text style={styles.clearSelectionText}>Change</Text>
+                      <Text
+                        style={[
+                          styles.clearSelectionText,
+                          { color: colors.text },
+                        ]}
+                      >
+                        Change
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -425,7 +523,10 @@ export default function GroupDetailPage() {
                         }}
                         style={styles.searchPoster}
                       />
-                      <Text style={styles.searchTitle} numberOfLines={2}>
+                      <Text
+                        style={[styles.searchTitle, { color: colors.subtext }]}
+                        numberOfLines={2}
+                      >
                         {item.title}
                       </Text>
                     </Pressable>
@@ -433,9 +534,17 @@ export default function GroupDetailPage() {
                 />
               )}
               <TextInput
-                style={[styles.input, styles.inputMultiline]}
+                style={[
+                  styles.input,
+                  styles.inputMultiline,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.inputText,
+                  },
+                ]}
                 placeholder="Add a note (optional)"
-                placeholderTextColor="#666"
+                placeholderTextColor={colors.placeholder}
                 value={postNote}
                 onChangeText={setPostNote}
                 multiline
@@ -456,7 +565,9 @@ export default function GroupDetailPage() {
               contentContainerStyle={styles.list}
               scrollEnabled={false}
               renderItem={({ item }) => (
-                <View style={styles.postCard}>
+                <View
+                  style={[styles.postCard, { backgroundColor: colors.surface }]}
+                >
                   <View style={styles.postHeader}>
                     <Image
                       source={{
@@ -467,15 +578,23 @@ export default function GroupDetailPage() {
                       style={styles.postPoster}
                     />
                     <View style={styles.postInfo}>
-                      <Text style={styles.postTitle}>{item.title}</Text>
+                      <Text style={[styles.postTitle, { color: colors.text }]}>
+                        {item.title}
+                      </Text>
                       {item.year ? (
-                        <Text style={styles.postMeta}>{item.year}</Text>
+                        <Text
+                          style={[styles.postMeta, { color: colors.muted }]}
+                        >
+                          {item.year}
+                        </Text>
                       ) : null}
                     </View>
                   </View>
                   <View style={styles.postFooter}>
                     {!!item.note && (
-                      <Text style={styles.postNote}>
+                      <Text
+                        style={[styles.postNote, { color: colors.subtext }]}
+                      >
                         {item.authorName || "Unknown"}: {item.note}
                       </Text>
                     )}

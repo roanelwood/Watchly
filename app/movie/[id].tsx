@@ -1,17 +1,18 @@
 import { auth, db } from "@/firebaseConfig";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const apiKey = "5b08fa299e458e98810648d4daac2ba5";
@@ -59,6 +60,24 @@ const getRegionFromLocale = () => {
 export default function MovieDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = {
+    background: isDark ? "#090909" : "#fff",
+    surface: isDark ? "#1a1a1a" : "#f2f2f2",
+    surfaceAlt: isDark ? "#151515" : "#f7f7f7",
+    text: isDark ? "#fff" : "#111",
+    subtext: isDark ? "#aaa" : "#555",
+    muted: isDark ? "#888" : "#666",
+    border: isDark ? "#2a2a2a" : "#ddd",
+    chipBg: isDark ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.12)",
+    chipBorder: isDark ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)",
+    chipText: isDark ? "#a5b4fc" : "#4f46e5",
+    overlay: isDark ? "rgba(9, 9, 9, 0.85)" : "rgba(255, 255, 255, 0.7)",
+    backButtonBg: isDark ? "rgba(0, 0, 0, 0.5)" : "rgba(255, 255, 255, 0.8)",
+    backIcon: isDark ? "#fff" : "#111",
+    ratingBadge: isDark ? "rgba(255, 215, 0, 0.15)" : "rgba(255, 215, 0, 0.2)",
+  };
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [cast, setCast] = useState<CastMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,16 +250,28 @@ export default function MovieDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fff" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.text} />
       </View>
     );
   }
 
   if (!movie) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Movie not found</Text>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Text style={[styles.errorText, { color: colors.text }]}>
+          Movie not found
+        </Text>
       </View>
     );
   }
@@ -248,7 +279,10 @@ export default function MovieDetailScreen() {
   const { width } = Dimensions.get("window");
 
   return (
-    <ScrollView style={styles.container} bounces={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      bounces={false}
+    >
       {/* Hero Section with Backdrop */}
       <View style={styles.heroSection}>
         <Image
@@ -257,20 +291,23 @@ export default function MovieDetailScreen() {
               ? IMAGE_ORIGINAL + movie.backdrop_path
               : undefined,
           }}
-          style={[styles.backdrop, { width, height: width * 0.6 }]}
+          style={[
+            styles.backdrop,
+            { width, height: width * 0.6, backgroundColor: colors.surface },
+          ]}
           blurRadius={0.5}
         />
 
         {/* Gradient Overlay */}
-        <View style={styles.gradient} />
+        <View style={[styles.gradient, { backgroundColor: colors.overlay }]} />
 
         {/* Back Button */}
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.backButtonBg }]}
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={28} color="#fff" />
+          <Ionicons name="arrow-back" size={28} color={colors.backIcon} />
         </TouchableOpacity>
       </View>
 
@@ -284,27 +321,34 @@ export default function MovieDetailScreen() {
                 ? IMAGE_BASE + movie.poster_path
                 : undefined,
             }}
-            style={styles.poster}
+            style={[styles.poster, { backgroundColor: colors.surface }]}
             resizeMode="cover"
           />
 
           <View style={styles.basicInfo}>
-            <Text style={styles.title}>{movie.title}</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {movie.title}
+            </Text>
 
             <View style={styles.metaRow}>
-              <View style={styles.ratingBadge}>
+              <View
+                style={[
+                  styles.ratingBadge,
+                  { backgroundColor: colors.ratingBadge },
+                ]}
+              >
                 <Ionicons name="star" size={16} color="#FFD700" />
                 <Text style={styles.ratingText}>
                   {movie.vote_average.toFixed(1)}
                 </Text>
               </View>
 
-              <Text style={styles.metaText}>
+              <Text style={[styles.metaText, { color: colors.subtext }]}>
                 {new Date(movie.release_date).getFullYear()}
               </Text>
 
               {movie.runtime > 0 && (
-                <Text style={styles.metaText}>
+                <Text style={[styles.metaText, { color: colors.subtext }]}>
                   {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
                 </Text>
               )}
@@ -313,8 +357,19 @@ export default function MovieDetailScreen() {
             {/* Genres */}
             <View style={styles.genresContainer}>
               {movie.genres.map((genre) => (
-                <View key={genre.id} style={styles.genreTag}>
-                  <Text style={styles.genreText}>{genre.name}</Text>
+                <View
+                  key={genre.id}
+                  style={[
+                    styles.genreTag,
+                    {
+                      backgroundColor: colors.chipBg,
+                      borderColor: colors.chipBorder,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.genreText, { color: colors.chipText }]}>
+                    {genre.name}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -326,6 +381,7 @@ export default function MovieDetailScreen() {
           <TouchableOpacity
             style={[
               styles.actionButton,
+              { backgroundColor: colors.surface, borderColor: colors.border },
               isInWatchlist && styles.actionButtonActive,
             ]}
             onPress={toggleWatchlist}
@@ -334,11 +390,12 @@ export default function MovieDetailScreen() {
             <Ionicons
               name={isInWatchlist ? "bookmark" : "bookmark-outline"}
               size={24}
-              color={isInWatchlist ? LIME : "#fff"}
+              color={isInWatchlist ? LIME : colors.text}
             />
             <Text
               style={[
                 styles.actionButtonText,
+                { color: colors.text },
                 isInWatchlist && styles.actionButtonTextActive,
               ]}
             >
@@ -349,6 +406,7 @@ export default function MovieDetailScreen() {
           <TouchableOpacity
             style={[
               styles.actionButton,
+              { backgroundColor: colors.surface, borderColor: colors.border },
               isfavourite && styles.actionButtonActive,
             ]}
             onPress={togglefavourite}
@@ -357,11 +415,12 @@ export default function MovieDetailScreen() {
             <Ionicons
               name={isfavourite ? "heart" : "heart-outline"}
               size={24}
-              color={isfavourite ? LIME : "#fff"}
+              color={isfavourite ? LIME : colors.text}
             />
             <Text
               style={[
                 styles.actionButtonText,
+                { color: colors.text },
                 isfavourite && styles.actionButtonTextActive,
               ]}
             >
@@ -373,39 +432,63 @@ export default function MovieDetailScreen() {
         {/* Where to Watch functionality*/}
         {watchProviders.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Where to watch</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Where to watch
+            </Text>
             <View style={styles.watchRow}>
-              <Text style={styles.watchLabel}>Watch on:</Text>
+              <Text style={[styles.watchLabel, { color: colors.subtext }]}>
+                Watch on:
+              </Text>
               <View style={styles.watchProviders}>
                 {watchProviders.map((provider) => (
-                  <View key={provider.provider_id} style={styles.providerChip}>
+                  <View
+                    key={provider.provider_id}
+                    style={[
+                      styles.providerChip,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
                     {provider.logo_path && (
                       <Image
                         source={{ uri: IMAGE_LOGO + provider.logo_path }}
                         style={styles.providerLogo}
                       />
                     )}
-                    <Text style={styles.providerText} numberOfLines={1}>
+                    <Text
+                      style={[styles.providerText, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
                       {provider.provider_name}
                     </Text>
                   </View>
                 ))}
               </View>
-              <Text style={styles.watchRegion}>Region: {watchRegion}</Text>
+              <Text style={[styles.watchRegion, { color: colors.muted }]}>
+                Region: {watchRegion}
+              </Text>
             </View>
           </View>
         )}
 
         {/* Overview */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-          <Text style={styles.overview}>{movie.overview}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Overview
+          </Text>
+          <Text style={[styles.overview, { color: colors.subtext }]}>
+            {movie.overview}
+          </Text>
         </View>
 
         {/* Cast */}
         {cast.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Cast</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Cast
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -419,13 +502,22 @@ export default function MovieDetailScreen() {
                         ? IMAGE_BASE + member.profile_path
                         : "https://via.placeholder.com/150x225/333/666?text=No+Photo",
                     }}
-                    style={styles.castPhoto}
+                    style={[
+                      styles.castPhoto,
+                      { backgroundColor: colors.surface },
+                    ]}
                     resizeMode="cover"
                   />
-                  <Text style={styles.castName} numberOfLines={1}>
+                  <Text
+                    style={[styles.castName, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
                     {member.name}
                   </Text>
-                  <Text style={styles.castCharacter} numberOfLines={1}>
+                  <Text
+                    style={[styles.castCharacter, { color: colors.muted }]}
+                    numberOfLines={1}
+                  >
                     {member.character}
                   </Text>
                 </View>
