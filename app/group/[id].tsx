@@ -2,27 +2,27 @@ import { auth, db } from "@/firebaseConfig";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
-    addDoc,
-    collection,
-    doc,
-    onSnapshot,
-    orderBy,
-    query,
-    serverTimestamp,
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
 } from "firebase/firestore";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 const apiKey = "5b08fa299e458e98810648d4daac2ba5";
@@ -565,8 +565,13 @@ export default function GroupDetailPage() {
               contentContainerStyle={styles.list}
               scrollEnabled={false}
               renderItem={({ item }) => (
-                <View
+                <Pressable
                   style={[styles.postCard, { backgroundColor: colors.surface }]}
+                  onPress={() => {
+                    if (item.movieId) {
+                      router.push(`/movie/${item.movieId}` as any);
+                    }
+                  }}
                 >
                   <View style={styles.postHeader}>
                     <Image
@@ -599,7 +604,7 @@ export default function GroupDetailPage() {
                       </Text>
                     )}
                   </View>
-                </View>
+                </Pressable>
               )}
             />
           </ScrollView>

@@ -3,15 +3,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const TMDB_API_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY;
@@ -51,7 +50,7 @@ const extractJsonArray = (content: string): string[] => {
   return parsed
     .map((item) => (typeof item === "string" ? item.trim() : ""))
     .filter((item) => item.length > 0)
-    .slice(0, 8);
+    .slice(0, 12);
 };
 
 const getTmdbSearchUrl = (query: string) => {
@@ -97,7 +96,7 @@ const searchWithOpenAI = async (query: string): Promise<string[]> => {
           content: `
 You are a movie recommendation system.
 
-Return ONLY a valid JSON array of movie titles.
+Return ONLY a valid JSON array of 12 movie titles.
 
 Rules:
 - No explanation
@@ -106,7 +105,7 @@ Rules:
 - Just JSON
 
 Example:
-["Inception", "The Dark Knight"]
+["Inception", "The Dark Knight", "Interstellar", "The Prestige", "Memento"]
           `,
         },
         {
@@ -248,13 +247,9 @@ export default function SearchPage() {
   };
 
   const renderMovieItem = ({ item }: { item: Movie }) => {
-    const { width } = Dimensions.get("window");
-    const posterWidth = Math.round((width - 48) / 3);
-    const posterHeight = Math.round(posterWidth * 1.5);
-
     return (
       <TouchableOpacity
-        style={[styles.movieCard, { width: posterWidth }]}
+        style={styles.movieCard}
         onPress={() => router.push(`/movie/${item.id}` as any)}
         activeOpacity={0.7}
       >
@@ -267,8 +262,6 @@ export default function SearchPage() {
           style={[
             styles.moviePoster,
             {
-              width: posterWidth,
-              height: posterHeight,
               backgroundColor: isDark ? "#222" : "#eaeaea",
             },
           ]}
@@ -571,13 +564,19 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   row: {
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     marginBottom: 20,
   },
   movieCard: {
-    marginBottom: 8,
+    flexGrow: 1,
+    flexBasis: 0,
+    maxWidth: "33.33%",
+    paddingHorizontal: 6,
+    marginBottom: 12,
   },
   moviePoster: {
+    width: "100%",
+    aspectRatio: 2 / 3,
     borderRadius: 8,
     backgroundColor: "#222",
     shadowColor: "#000",
